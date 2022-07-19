@@ -211,7 +211,7 @@ int main() {
     createGame(tiles, openSpaces);
     printBoard(tiles);
 
-    printList(openSpaces);
+    //printList(openSpaces);
 
     //debug(tiles);
     
