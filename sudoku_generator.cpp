@@ -29,7 +29,7 @@ Node* makeList(){
 }
 
 //addToList will add a node to a list, at the beginning, moving the list further down
-void addToEnd(Node *head, int data){
+void addToList(Node *head, int data){
     Node* new_node = new Node();
     new_node->data = data;
     new_node->next = head->next;
@@ -37,6 +37,8 @@ void addToEnd(Node *head, int data){
     head->data++;
 }
 
+//deleteNode will take in a list and a data point, then find and delete that data point from the list
+//if the node is not present, then nothing will happen.
 void deleteNode(Node *head, int data){
     Node *cursor = head;
     while((cursor->next != NULL) && (cursor->next->data != data)){
@@ -48,6 +50,7 @@ void deleteNode(Node *head, int data){
     head->data--;
 }
 
+//printList takes in a linked list as a parameter and prints it out in order to the terminal
 void printList(Node *list){
     std::cout << "length: " << list->data << "  list: ";
     Node* cursor = list;
@@ -59,22 +62,18 @@ void printList(Node *list){
     std::cout << "\n";
 }
 
+//getData takes in a list and an index, and will return the data of the node at that index
 int getData(Node *head, int index){
-    //if(index < head->data)
-    //{
-        Node *cursor = head;
-        if(cursor->next == NULL)
-            return -1;
-        for(int i = 0; i < index; i++){
-            cursor = cursor->next;
-        }
-        if(cursor != NULL)
-            return cursor->data;
-        else
-            return -1;
-    //}
-    //else
-    //    return -1;
+    Node *cursor = head;
+    if(cursor->next == NULL)
+        return -1;
+    for(int i = 0; i < index; i++){
+        cursor = cursor->next;
+    }
+    if(cursor != NULL)
+        return cursor->data;
+    else
+        return -1;
 }
 
 //print the board out, parameter is the tiles array
@@ -98,13 +97,12 @@ void printBoard(square **board) {
 void initializeArray(square **x){
     for(int i = 0; i < 9; i++){
         for(int j = 0; j < 9; j++){
-           x[i][j].value = 0;          //initizlizes each square with an x, placeholder
-           x[i][j].possibilities = makeList(); //gives each square a possibilities list
+           x[i][j].value = 0;                               //initizlizes each square with an 0, placeholder
+           x[i][j].possibilities = makeList();              //gives each square a possibilities list
            for(int k = 0; k < 9; k++)
            {
-                //x[i][j].possibilities[k] = k + 1;        //initializes each square to have all possibilities 1-9
-                addToEnd(x[i][j].possibilities, k + 1);
-                x[i][j].id = ((i / 3) + 1) + ((j / 3) * 3);  //assigns each square a box ID from 1-9 from left to right
+                addToList(x[i][j].possibilities, k + 1);     //fills each square's possibilities list with 1-9
+                x[i][j].id = ((i / 3) + 1) + ((j / 3) * 3); //assigns each square a box ID from 1-9 from left to right
            }
         }
     }
@@ -115,13 +113,13 @@ void initializeArray(square **x){
 void adjustPossibilities(square **tiles, int x, int y){
     for(int i = 0; i < 9; i++){
         for(int j = 0; j < 9; j++){
-            if((i == x | j == y) | (tiles[x][y].id == tiles[i][j].id))
-                deleteNode(tiles[i][j].possibilities, tiles[x][y].value);
-                //tiles[i][j].possibilities[tiles[x][y].value - 1] = 0;
+            if((i == x | j == y) | (tiles[x][y].id == tiles[i][j].id))      
+                deleteNode(tiles[i][j].possibilities, tiles[x][y].value);   //delete the node from the possibilities list that matches the value of the tile
         }
     }
 }
 
+//isPresent will take in a list and a value, and return true if any of the nodes in that list contain the value. currently unused.
 bool isPresent(Node *head, int value){
     Node *cursor = head->next;
     while(cursor->next != NULL){
@@ -132,6 +130,11 @@ bool isPresent(Node *head, int value){
     return false;
 }
 
+//recursor is the engine that carries out one step of the creation process
+//it first chooses a tile from the list of available tiles
+//then if there are possibilities in that tile's list, it will insert a random possible value
+//finally it will then adjust the possibilities of all other tiles on the board as such.
+//if there are no possibilities, then it will output "failed"
 void recursor(square **tiles, int counter, Node *openSpaces){
     int x, y, key, insert = 0;
 
@@ -143,7 +146,7 @@ void recursor(square **tiles, int counter, Node *openSpaces){
         deleteNode(openSpaces, key);
     }
     else{
-        cout << "failed completion\n";
+        cout << "failed insertion\n";
     }
     
     tiles[x][y].value = insert;
@@ -151,9 +154,12 @@ void recursor(square **tiles, int counter, Node *openSpaces){
     adjustPossibilities(tiles, x, y);
 }
 
+//createGame is the driver that callsrecursor
+//currently will attempt a recursor until the board is determined to be unfillable 
+//(i.e. there are no possibilities in the remaining squares)
 void createGame(square **x, Node *openSpaces){
     int count = 1;
-    for(int i = 0; i < 81; i++)
+    while(openSpaces->data > 0)
     {
         cout << "success #" << count << "\n";
         recursor(x, count, openSpaces);
@@ -161,6 +167,7 @@ void createGame(square **x, Node *openSpaces){
     }
 }
 
+//debugger that allows the user to see the possibilities of a selected square
 void debug(square **tiles){
     bool again;
     do{
@@ -185,37 +192,29 @@ void debug(square **tiles){
     } while(again);
 }
 
-void buildList(Node *openSpaces){
-    for(int i = 0; i < 81; i++)
-    {
-        addToEnd(openSpaces, i);
-    }
-}
-
 int main() {
-    srand (time(NULL));    //initialize randomizer
+    srand (time(NULL));                 //initialize randomizer
+    square **tiles = new square*[9];    //initialize 2D array of squares
+    for (int i = 0; i < 9; i++) 
+        tiles[i] = new square[9];       
+    Node *openSpaces = makeList();      //create openSpaces list
+    for(int i = 0; i < 81; i++)
+        addToList(openSpaces, i);       //fill openSpaces list
 
-    square **tiles = new square*[9];
-    for (int i = 0; i < 9; i++) {
-        tiles[i] = new square[9];
-    }
-    Node *openSpaces = makeList();
-    buildList(openSpaces);
+    initializeArray(tiles);             //fills each square with placeholder value and possibilities
+    createGame(tiles, openSpaces);      //fills the board with values
+    printBoard(tiles);                  //prints the board
 
-    initializeArray(tiles);
-    createGame(tiles, openSpaces);
-    printBoard(tiles);
-
-    //printList(openSpaces);
-
+    printList(openSpaces);              //for debugging, print out the openSpaces list
     //debug(tiles);
     
-    for(int i=0;i<9;i++)    //To delete the inner arrays
+    for(int i=0;i<9;i++)                //delete the inner arrays
       delete [] tiles[i];   
-      delete [] tiles;   
+    delete [] tiles;   
     return 0;
 }
-/*
+
+/* board reference
 x x x | x x x | x x x 
 x x x | x x x | x x x
 x x x | x x x | x x x
