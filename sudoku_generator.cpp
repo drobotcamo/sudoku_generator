@@ -67,13 +67,13 @@ int getData(Node *head, int index){
     Node *cursor = head;
     if(cursor->next == NULL)
         return -1;
-    for(int i = 0; i < index; i++){
+    for(int i = 0; i < index; i++)
         cursor = cursor->next;
-    }
+    if(index == 0)
+        return cursor->next->data;
     if(cursor != NULL)
         return cursor->data;
-    else
-        return -1;
+    return -1;
 }
 
 //print the board out, parameter is the tiles array
@@ -137,48 +137,39 @@ bool isPresent(Node *head, int value){
 //if there are no possibilities, then it will output "failed"
 void recursor(square **tiles, int counter, Node *openSpaces){
     int x, y, key, insert = 0;
-
     key = getData(openSpaces, (rand() % openSpaces->data));
     x = key / 9;
     y = key % 9;
-    if(tiles[x][y].possibilities->data != 0){
+    
+    if(tiles[x][y].possibilities->data != 0)
         insert = getData(tiles[x][y].possibilities, (rand() % tiles[x][y].possibilities->data) + 1);
-        deleteNode(openSpaces, key);
-    }
-    else{
+    else
         cout << "failed insertion\n";
-    }
-    
+
+    deleteNode(openSpaces, key);
     tiles[x][y].value = insert;
-    
     adjustPossibilities(tiles, x, y);
 }
 
-//createGame is the driver that callsrecursor
+//createGame is the driver that calls recursor
 //currently will attempt a recursor until the board is determined to be unfillable 
 //(i.e. there are no possibilities in the remaining squares)
 void createGame(square **x, Node *openSpaces){
     int count = 1;
-    while(openSpaces->data > 0)
-    {
-        cout << "success #" << count << "\n";
+    while(openSpaces->data > 0) 
         recursor(x, count, openSpaces);
-        count++;
-    }
 }
 
 //debugger that allows the user to see the possibilities of a selected square
 void debug(square **tiles){
     bool again;
     do{
-        cout << "enter x coordinate of the tile you wanna check: ";
+        cout << "enter x coordinate of the tile you wanna check (0-8): ";
         int x;
         cin >> x;
-        x--;
-        cout << "enter y coordinate of the tile you wanna check: ";
+        cout << "enter y coordinate of the tile you wanna check (0-8): ";
         int y;
         cin >> y;
-        y--;
         printList(tiles[y][x].possibilities);
         cout << "\n";
         cout << "another? (y/n): ";
