@@ -28,17 +28,12 @@ Node* makeList(){
     return head;
 }
 
-//add to end will create a new node that is added to the end of the 
+//addToList will add a node to a list, at the beginning, moving the list further down
 void addToEnd(Node *head, int data){
     Node* new_node = new Node();
     new_node->data = data;
-    new_node->next = NULL;
-
-    Node *cursor = head;
-    while(cursor->next != NULL){
-        cursor = cursor->next;
-    }
-    cursor->next = new_node;
+    new_node->next = head->next;
+    head->next = new_node;
     head->data++;
 }
 
