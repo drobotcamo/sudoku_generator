@@ -70,10 +70,11 @@ int getData(Node *head, int index){
     Node *cursor = head;
     if(cursor->next == NULL)
         return -1;
+    cursor = cursor->next;     // testing
     for(int i = 0; i < index; i++)
         cursor = cursor->next;
-    if(index == 0)
-        return cursor->next->data;
+    // if(index == 0)
+    //     return cursor->next->data;
     if(cursor != NULL)
         return cursor->data;
     return -1;
@@ -153,7 +154,7 @@ bool boardIsValid(square **tiles)
             if(tiles[column][row].value != 0)
                 deleteNode(checker, tiles[column][row].value);
             else{
-                for(int index = 0; index <= tiles[column][row].possibilities->data; index++)
+                for(int index = 0; index < tiles[column][row].possibilities->data; index++)
                     deleteNode(checker, getData(tiles[column][row].possibilities, index));
             }
         }
@@ -170,7 +171,7 @@ bool boardIsValid(square **tiles)
             if(tiles[column][row].value != 0)
                 deleteNode(checker, tiles[column][row].value);
             else{
-                for(int index = 0; index <= tiles[column][row].possibilities->data; index++)
+                for(int index = 0; index < tiles[column][row].possibilities->data; index++)
                     deleteNode(checker, getData(tiles[column][row].possibilities, index));
             }
         }
@@ -190,7 +191,7 @@ bool boardIsValid(square **tiles)
                     if(tiles[i][j].value != 0)
                         deleteNode(checker, tiles[i][j].value);
                     else{
-                        for(int index = 0; index <= tiles[i][j].possibilities->data; index++)
+                        for(int index = 0; index < tiles[i][j].possibilities->data; index++)
                             deleteNode(checker, getData(tiles[i][j].possibilities, index));
                     }
                 }
@@ -214,6 +215,7 @@ bool removePossibilites(square **tiles, int x, int y){
     bool succeeding = true;
     int val = tiles[x][y].value;
     Node *changed = makeList();
+    Node *deletedPoss = makeList();
     for(int i = 0; i < 9; i++){
         for(int j = 0; j < 9; j++){
             if((i == x | j == y) | (tiles[x][y].id == tiles[i][j].id)){   
@@ -222,18 +224,28 @@ bool removePossibilites(square **tiles, int x, int y){
             }
         }
     }
+    for(int i = 1; i <= 9; i++){
+        if(deleteNode(tiles[x][y].possibilities, i))
+            addToList(deletedPoss, i);
+    }
+
     if(boardIsValid(tiles) == false)
         succeeding = false;
 
     if(succeeding == false){
         int k, j, key;
-        cout << "clearing the changes made by tile at x: " << y << ", y: " << x << ", whose value is: " << val << "\n";
+        cout << "clearing the changes made by inserting that " << val << "\n";
         while(changed->next != NULL){
             key = changed->next->data;
             k = key / 9;                        
             j = key % 9; 
             addToList(tiles[k][j].possibilities, val);
             deleteNode(changed, key);
+        }
+        while(deletedPoss->next != NULL){
+            key = deletedPoss->next->data;
+            addToList(tiles[x][y].possibilities, key);
+            deleteNode(deletedPoss, key);
         }
     }
     
@@ -247,10 +259,12 @@ bool removePossibilites(square **tiles, int x, int y){
 //if there are no possibilities, then it will output "failed"
 void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuccessful, bool *complete){
     //debugger stepper \/
-    printBoard(tiles);
     // char placeholder;
     // cout << "press enter to take the next step \n";
     // cin >> placeholder;
+    cout << "=====================================================================\n";
+    cout << "recursor #" << *counter << " is now going to execute. \n";
+    printBoard(tiles);
     
     int x, y, key, insert = 0;
     key = openSpaces[*counter];          //this code block gets the ID from the openspaces list, and translates it into x and y
@@ -264,11 +278,11 @@ void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuc
     }
     
     while(tiles[x][y].possibilities->data > 0  && *complete == false){
-        cout << "we tried once: #" << *counter << "\n";
-        tiles[x][y].value = getData(tiles[x][y].possibilities, (rand() % tiles[x][y].possibilities->data) + 1);
+        tiles[x][y].value = getData(tiles[x][y].possibilities, (rand() % tiles[x][y].possibilities->data));
+        cout << "attempting insertion of value " << tiles[x][y].value << " at position x: " << y << ", y: " << x << "\n";
         if(removePossibilites(tiles, x, y) != false && lastWasSuccessful){
+            cout << "insertion successful \n";
             *counter = *counter + 1;
-            cout << "just inserted the value " << tiles[x][y].value << " at position x: " << y << ", y: " << x << "\n";
             *lastWasSuccessful = true;
             recursor(tiles, counter, openSpaces, lastWasSuccessful, complete);
         }
@@ -277,6 +291,7 @@ void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuc
             tiles[x][y].value = 0;
         }
     }
+    cout << "mission failed. returning to base.\n";
     return;
 }
 
@@ -334,8 +349,9 @@ int main() {
 
     initializeArray(tiles);             //fills each square with placeholder value and possibilities
     createGame(tiles, openSpaces);      //fills the board with values
-    printBoard(tiles);                   //prints the board
-    //printList(openSpaces);              //for debugging, print out the openSpaces list
+    //printBoard(tiles);                   //prints the board
+    //boardIsValid(tiles);
+   
     //debug(tiles);
     
     for(int i=0;i<9;i++)                //delete the inner arrays
