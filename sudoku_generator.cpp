@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream>     /*cout and cin */
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -232,10 +232,9 @@ bool removePossibilites(square **tiles, int x, int y){
         if(deleteNode(tiles[x][y].possibilities, i))
             addToList(deletedPoss, i);
     }
-
     if(boardIsValid(tiles) == false)
         succeeding = false;
-
+    
     if(succeeding == false){
         int k, j, key;
         cout << "Clearing the changes made by inserting that " << val << "\n";
@@ -251,9 +250,37 @@ bool removePossibilites(square **tiles, int x, int y){
             addToList(tiles[x][y].possibilities, key);
             deleteNode(deletedPoss, key);
         }
+        deleteNode(tiles[x][y].possibilities, val);
     }
     
     return succeeding;
+}
+
+void recalculatePossibilities(square **tiles){
+    for(int i = 0; i < 9; i++){                 //we will calculate on all 81 squares on the board
+        for(int j = 0; j < 9; j++){
+            if(tiles[i][j].value == 0){         //nonzero squares will have their possibility lists restored to 1-9 by
+                for(int k = 1; k <= 9; k++){    //by deleting the old numbers and re adding them
+                    deleteNode(tiles[i][j].possibilities, k);
+                    addToList(tiles[i][j].possibilities, k);
+                }
+            }
+            for(int c = 0; c < 9; c++){         //checks this column, and removes possibilities based on the nums in the column
+                if(tiles[i][c].value != 0)
+                    deleteNode(tiles[i][j].possibilities, tiles[i][c].value);
+            }
+            for(int r = 0; r < 9; r++){         //checks this row, and removes possibilities based on the nums in the row
+                if(tiles[r][j].value != 0)
+                    deleteNode(tiles[i][j].possibilities, tiles[r][j].value);
+            }
+            for(int b = 0; b < 9; b++){         //check all squares, and in sqaures that match ids, remove possibilities based on their values
+                for(int a = 0; a < 9; a++){
+                    if((tiles[a][b].id == tiles[i][j].id) && tiles[a][b].value != 0)
+                        deleteNode(tiles[i][j].possibilities, tiles[a][b].value);
+                }
+            }
+        }
+    }
 }
 
 //recursor is the engine that carries out one step of the creation process
@@ -261,11 +288,8 @@ bool removePossibilites(square **tiles, int x, int y){
 //then if there are possibilities in that tile's list, it will insert a random possible value
 //finally it will then adjust the possibilities of all other tiles on the board as such.
 //if there are no possibilities, then it will output "failed"
-void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuccessful, bool *complete){
-    //debugger stepper \/
-    // char placeholder;
-    // cout << "press enter to take the next step \n";
-    // cin >> placeholder;
+void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuccessful){
+
     cout << "=====================================================================\n";
     cout << "recursor #" << *counter << " is now going to execute at position x:";
     
@@ -276,28 +300,42 @@ void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuc
     cout << y << ", y:" << x <<"\n";
     printBoard(tiles);
 
-    if(*counter == 81)
-    {                         
-        *complete = true;
+    if(*counter == 82){                    
         return;
     }
-    
-    while(tiles[x][y].possibilities->data > 0  && *complete == false){
+
+    while(tiles[x][y].possibilities->data > 0){
         tiles[x][y].value = getData(tiles[x][y].possibilities, (rand() % tiles[x][y].possibilities->data));
+        //insert value
+        //recalculate
+        //boardValid?
+        //yes -> success, go again
+        //no? -> remove what we just placed, recalculate
+        //    -> try again until there is a success
+        //we ran out? shoot, now here's what happens. we get to the bottom of the function
+        //and now we have to do the following: take the previous square, clear its value, 
+        //and restore its possibilities (recalculate) and take that value off of the list
         cout << "attempting insertion of value " << tiles[x][y].value << " at position x: " << y << ", y: " << x << "\n";
         if(removePossibilites(tiles, x, y) != false && lastWasSuccessful){
             cout << "insertion successful \n";
             *counter = *counter + 1;
             *lastWasSuccessful = true;
-            recursor(tiles, counter, openSpaces, lastWasSuccessful, complete);
+            recursor(tiles, counter, openSpaces, lastWasSuccessful);
+            // if(!lastWasSuccessful){
+            //     int temp = tiles[x][y].value;
+            //     tiles[x][y].value = 0;
+            //     //recalculate
+            //     deleteNode(tiles[x][y].possibilities, temp);
+            // }
         }
         else{
-            deleteNode(tiles[x][y].possibilities, tiles[x][y].value);
             tiles[x][y].value = 0;
         }
     }
-    //debug(tiles);
-    cout << "mission failed. returning to base.\n";
+    *lastWasSuccessful = false;
+    recalculatePossibilities(tiles);
+    debug(tiles);
+    cout << "mission failed. returning to previous step.\n";
     return;
 }
 
@@ -326,7 +364,7 @@ void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuc
 void createGame(square **x, int openSpaces[81]){
     int count = 0;
     bool lastWasSuccessful = true, complete = false;
-    recursor(x, &count, openSpaces, &lastWasSuccessful, &complete);
+    recursor(x, &count, openSpaces, &lastWasSuccessful);
 }
 
 void randomSequence(int openSpaces[81]){
