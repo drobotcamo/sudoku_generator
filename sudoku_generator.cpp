@@ -159,7 +159,7 @@ bool boardIsValid(square **tiles)
             }
         }
         if(checker->data > 0){
-            cout << "Row #" << column + 1 << " cannot be completed\n";
+            cout << "Row #" << column + 1 << " cannot be completed   |  ";
             cout << "The following value cannot be inserted: " << checker->next->data << "\n";
             return false;
         }
@@ -176,7 +176,7 @@ bool boardIsValid(square **tiles)
             }
         }
         if(checker->data > 0){
-            cout << "Column #" << row + 1 << " cannot be completed\n";
+            cout << "Column #" << row + 1 << " cannot be completed   |  ";
             cout << "The following value cannot be inserted: " << checker->next->data << "\n";
             return false;
         }
@@ -195,10 +195,14 @@ bool boardIsValid(square **tiles)
                             deleteNode(checker, getData(tiles[i][j].possibilities, index));
                     }
                 }
+                if(tiles[i][j].possibilities->data == 0 && tiles[i][j].value == 0){
+                    cout << "ERROR: tile at position x: " << j << ", y: " << i << " has 0 possibilities.\n";
+                    return false;
+                }
             }
         }
         if(checker->data > 0){
-            cout << "Box #" << boxID << " cannot be completed\n";
+            cout << "Box #" << boxID << " cannot be completed   |  ";
             cout << "The following value cannot be inserted: " << checker->next->data << "\n";
             return false;
         }
@@ -234,7 +238,7 @@ bool removePossibilites(square **tiles, int x, int y){
 
     if(succeeding == false){
         int k, j, key;
-        cout << "clearing the changes made by inserting that " << val << "\n";
+        cout << "Clearing the changes made by inserting that " << val << "\n";
         while(changed->next != NULL){
             key = changed->next->data;
             k = key / 9;                        
@@ -263,14 +267,15 @@ void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuc
     // cout << "press enter to take the next step \n";
     // cin >> placeholder;
     cout << "=====================================================================\n";
-    cout << "recursor #" << *counter << " is now going to execute. \n";
-    printBoard(tiles);
+    cout << "recursor #" << *counter << " is now going to execute at position x:";
     
     int x, y, key, insert = 0;
     key = openSpaces[*counter];          //this code block gets the ID from the openspaces list, and translates it into x and y
     x = key / 9;                        //
     y = key % 9;                        //
-    
+    cout << y << ", y:" << x <<"\n";
+    printBoard(tiles);
+
     if(*counter == 81)
     {                         
         *complete = true;
@@ -291,6 +296,7 @@ void recursor(square **tiles, int *counter, int openSpaces[81], bool *lastWasSuc
             tiles[x][y].value = 0;
         }
     }
+    //debug(tiles);
     cout << "mission failed. returning to base.\n";
     return;
 }
